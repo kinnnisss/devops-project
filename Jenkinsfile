@@ -2,8 +2,8 @@ pipeline {
   agent any
 
   environment {
-    APP_NAME   = "maven-project"
-    IMAGE_TAG  = "${env.BUILD_NUMBER}"
+    APP_NAME  = "maven-project"
+    IMAGE_TAG = "${env.BUILD_NUMBER}"
   }
 
   stages {
@@ -17,7 +17,8 @@ pipeline {
       agent {
         docker {
           image 'maven:3.9-eclipse-temurin-8'
-          args  '-v $HOME/.m2:/root/.m2'
+          args '-v $HOME/.m2:/root/.m2'
+          reuseNode true
         }
       }
       steps {
@@ -29,7 +30,8 @@ pipeline {
       agent {
         docker {
           image 'maven:3.9-eclipse-temurin-8'
-          args  '-v $HOME/.m2:/root/.m2'
+          args '-v $HOME/.m2:/root/.m2'
+          reuseNode true
         }
       }
       steps {
@@ -42,8 +44,15 @@ pipeline {
         sh '''
           echo "=== server target ==="
           ls -lah server/target || true
+
+          echo "=== server surefire reports ==="
+          ls -lah server/target/surefire-reports || true
+
           echo "=== webapp target ==="
           ls -lah webapp/target || true
+
+          echo "=== webapp surefire reports ==="
+          ls -lah webapp/target/surefire-reports || true
         '''
       }
     }
@@ -60,8 +69,8 @@ pipeline {
 
   post {
     always {
-      junit '**/target/surefire-reports/*.xml'
-      archiveArtifacts artifacts: '**/target/*.jar, **/target/*.war', fingerprint: true, allowEmptyArchive: true
+      junit testResults: '**/target/surefire-reports/*.xml', allowEmptyResults: true
+      archiveArtifacts artifacts: '**/target/*.jar,**/target/*.war', fingerprint: true, allowEmptyArchive: true
     }
   }
 }
